@@ -29,7 +29,7 @@ class Command(BaseCommand):
             raise Exception(f"unknown API command {cmd}")
 
 
-    def __load_data(self, cmd: str):
+    def __load_data_one_by_one(self, cmd: str):
         if self.__is_data_loaded(cmd):
             self.stdout.write(
                 f"{cmd} data already loaded. We need an empty table to load new data"
@@ -55,10 +55,42 @@ class Command(BaseCommand):
 
             if not serializer.is_valid():
                 self.stdout.write(
-                    f"Errors parsing post {index}: " + str(serializer.error_messages)
+                    f"Errors parsing item {index}: " + str(serializer.errors)
                 )
                 continue
             serializer.save()
+
+        self.stdout.write(f"Finished loading data from {cmd}")
+
+    #To be tested
+    def __load_data(self, cmd: str):
+        if self.__is_data_loaded(cmd):
+            self.stdout.write(
+                f"{cmd} data already loaded. We need an empty table to load new data"
+            )
+            return
+
+        url = Command._request_url + cmd
+        res = requests.get(url)
+        stream = io.BytesIO(res.content)
+        data = JSONParser().parse(stream)
+        
+        if len(data) == 0:
+            self.stdout.write("No data loaded. Empty set.")
+            return
+
+        if cmd == "/posts":
+            serializer = PostSerializer(data=data, many=True)
+        elif cmd == "/comments":
+            serializer = CommentSerializer(data=data, many=True)
+        else:
+            raise Exception(f"unknown API command {cmd}")
+
+        if not serializer.is_valid():
+            self.stdout.write(
+                f"Errors parsing data: " + str(serializer.errors)
+            )
+        serializer.save()
 
         self.stdout.write(f"Finished loading data from {cmd}")
 
@@ -66,8 +98,8 @@ class Command(BaseCommand):
         self.stdout.write(f"Requesting data to {Command._request_url}")
 
         try:
-            self.__load_data("/posts")
-            self.__load_data("/comments")
+            self.__load_data_one_by_one("/posts")
+            self.__load_data_one_by_one("/comments")
         except ParseError as ex:
             self.stdout.write("Could not parse downloaded data: " + str(ex))
         except Exception as ex:
