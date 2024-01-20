@@ -6,9 +6,10 @@ import io
 
 from ...models import Post, Comment
 from ...serializers import PostSerializer, CommentSerializer
+from ...synchronization import Requester, sync_url
 
 class Command(BaseCommand):
-    _request_url = "https://jsonplaceholder.typicode.com"
+    _request_url = sync_url
 
     help = f"""Imports posts and comments resources from {_request_url}
             and loads them into the database"""
@@ -36,10 +37,12 @@ class Command(BaseCommand):
             )
             return
 
-        url = Command._request_url + cmd
-        res = requests.get(url)
-        stream = io.BytesIO(res.content)
-        data = JSONParser().parse(stream)
+        #url = Command._request_url + cmd
+        #res = requests.get(url)
+        #stream = io.BytesIO(res.content)
+        #data = JSONParser().parse(stream)
+        requester = Requester(Command._request_url)
+        data = requester.data_list_from_get_request(cmd)
         
         if len(data) == 0:
             self.stdout.write("No data loaded. Empty set.")
