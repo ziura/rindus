@@ -3,6 +3,7 @@ from django.db import models
 default_user_id = 99999942
 
 class Post(models.Model):
+    owner = models.ForeignKey('auth.User', related_name='posts', on_delete=models.CASCADE, null=True)
     userId = models.IntegerField(default=default_user_id)
     id = models.IntegerField(primary_key=True)
     title = models.TextField()
