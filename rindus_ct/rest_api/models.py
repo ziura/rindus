@@ -1,5 +1,5 @@
 from django.db import models
-from synchronization import SyncPost
+
 
 default_user_id = 99999942
 
@@ -10,16 +10,6 @@ class Post(models.Model):
     title = models.TextField()
     body = models.TextField()
 
-    def to_dict(self) -> dict:
-        return {
-            "userId": str(Post.userId),
-            "id": str(Post.id),
-            "title": str(Post.title),
-            "body": str(Post.body)
-        }
-
-    def to_syncpost(self) -> SyncPost:
-        return SyncPost(self)
 
 class Comment(models.Model):
     postId = models.ForeignKey(Post, on_delete=models.CASCADE)

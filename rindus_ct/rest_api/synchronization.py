@@ -2,31 +2,32 @@ from rest_framework.parsers import JSONParser
 import requests
 import io
 
-from models import Post, Comment
+from .models import Post, Comment
 
 sync_url = "https://jsonplaceholder.typicode.com"
 
+
 class SyncPost():
     def __init__(self, post: Post):
-        self.__userId = post.userId
-        self.__id = post.id
-        self.__title = post.title
-        self.__body = post.body
+        self.userId = post.userId
+        self.id = post.id
+        self.title = post.title
+        self.body = post.body
 
     def __repr__(self):
         return f"""SyncPost(
-                userId={self.__userId},
-                id={self.__id},
-                title='{self.__title}',
-                body='{self.__body}')"""
+                userId={self.userId},
+                id={self.id},
+                title='{self.title}',
+                body='{self.body}')"""
 
     def __eq__(self, other):
         if isinstance(other, SyncPost):
             return (
-                (self.__userId == other.userId) and
-                (self.__id == other.id) and
-                (self.__title == other.title) and
-                (self.__body == other.body)
+                (self.userId == other.userId) and
+                (self.id == other.id) and
+                (self.title == other.title) and
+                (self.body == other.body)
             )
         else:
             return False
@@ -36,6 +37,30 @@ class SyncPost():
     
     def __hash__(self):
         return hash(self.__repr__())
+
+    def __contains__(self, other):
+        if isinstance(other, SyncPost):
+            return self.id == other.id
+        return False
+
+    @classmethod
+    def from_dict(cls, dict_post: dict):
+        return cls(
+            Post(
+                userId=dict_post["userId"],
+                id=dict_post["id"],
+                title=dict_post["title"],
+                body=dict_post["body"]
+            )
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            "userId": str(Post.userId),
+            "id": str(Post.id),
+            "title": str(Post.title),
+            "body": str(Post.body)
+        }
 
 
 class Requester():
@@ -48,23 +73,77 @@ class Requester():
         response = requests.get(url)
         stream = io.BytesIO(response.content)
         return JSONParser().parse(stream)
+    
+    def delete(self, cmd: str):
+        url = self.__url + cmd
+        requests.delete(url)
+
+    def create(self, cmd: str, content: dict):
+        url = self.__url + cmd
+        requests.post(url, json=content)
+
+
+class SynchronizerCRUD():
+
+    def __init__(self, url, cmd):
+        self.__cmd = cmd
+        self.__request_url = url + cmd
+
+    def delete_set(self, ds: set[SyncPost]) -> str:
+        if (len(ds) > 0):
+            requester = Requester(self.__request_url)
+            response = f"Deleted from {self.__cmd} with ids:"
+            for item in ds:
+                delete_cmd = self.__request_url + str(item.id)
+                requester.delete(delete_cmd)
+                response += str(item.id) + " "
+            return response
+        return "0 deleted"
+
+    def create_set(self, ds: set[SyncPost]) -> str:
+        if (len(ds) > 0):
+            requester = Requester(self.__request_url)
+            response = f"Created in {self.__cmd} with ids:"
+            for item in ds:
+                post_cmd = self.__request_url + str(item.id)
+                requester.create(post_cmd, item.to_dict())
+                response += str(item.id) + " "
+            return response
+        return "0 created"
 
 
 class Synchronizer():
-    _request_url = sync_url
 
-    def __init__(self):
-        pass
+    def __init__(self, url: str):
+        self.__request_url = url
 
     def __syncrhonize_remote(self, db_data: list[SyncPost], rq_data: list[SyncPost]):
-        pass
+        """
+        Calculates the difference between database and received data and syncrhonizes
+        remote server according to the differences
+        """
+        set_db = set(db_data)
+        set_rq = set(rq_data)
 
-    def synchronize(self):
+        if set_db == set_rq:
+            return "No change. Nothing to synchronize"
+
+        deleted = set_rq.difference(set_db)
+        created = set_db.difference(set_rq)
+
+        response = "Synchronized with "
+        crud = SynchronizerCRUD(self.__request_url, "/posts")
+        response += crud.create_set(created)
+        response += crud.delete_set(deleted)
+        return response
+
+
+    def synchronize(self) -> str:
         f"""
         Synchronizes the database in the project with data from {sync_url}
         """
 
-        requester = Requester(Synchronizer._request_url)
+        requester = Requester(self.__request_url)
         vrq_data = requester.data_list_from_get_request("/posts")
         rq_data = []
         for d in vrq_data:
@@ -73,8 +152,8 @@ class Synchronizer():
         data_list = list(Post.objects.all())
         db_data = []
         for post in data_list:
-            db_data.append(post.to_syncpost())
+            db_data.append(SyncPost(post))
 
-        self.__syncrhonize_remote(db_data, rq_data)
+        return self.__syncrhonize_remote(db_data, rq_data)
 
 

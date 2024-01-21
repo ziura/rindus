@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
         try:
             sync = Synchronizer(sync_url)
-            sync.synchronize()
-            self.stdout.write("Remote server synchronized")
+            result = sync.synchronize()
+            self.stdout.write(result)
         except Exception as ex:
             self.stdout.write("Error loading data: " + str(ex))
