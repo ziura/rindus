@@ -3,6 +3,7 @@ import requests
 import io
 
 from .models import Post, Comment
+from .definitions import RestCmd
 
 sync_url = "https://jsonplaceholder.typicode.com"
 
@@ -58,6 +59,67 @@ class SyncPost():
         }
 
 
+class SyncComment():
+    def __init__(self, comment: Comment):
+        self.postId = comment.postId
+        self.id = comment.id
+        self.name = comment.name
+        self.email = comment.email
+        self.body = comment.body
+
+    def __repr__(self):
+        return f"""SyncComment(
+                postId={self.postId},
+                id={self.id},
+                name='{self.name}',
+                email='{self.email}'),
+                body='{self.body}'"""
+
+    def __eq__(self, other):
+        if isinstance(other, SyncComment):
+            return (
+                (self.postId == other.postId) and
+                (self.id == other.id) and
+                (self.name == other.name) and
+                (self.email == other.email) and
+                (self.body == other.body)
+            )
+        else:
+            return False
+        
+    def __ne__(self, other):
+        return (not self.__eq__(other))
+    
+    def __hash__(self):
+        return hash(self.__repr__())
+
+    @classmethod
+    def from_dict(cls, dict_comment: dict):
+        try:
+            post = Post.objects.get(id=int(dict_comment["postId"]))
+        except Post.DoesNotExist:
+            post = None
+
+        return cls(
+            Comment(
+                postId=post,
+                id=dict_comment["id"],
+                name=dict_comment["name"],
+                email=dict_comment["email"],
+                body=dict_comment["body"]
+            )
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            "postId": str(Comment.postId),
+            "id": str(Comment.id),
+            "name": str(Comment.name),
+            "email": str(Comment.email),
+            "body": str(Comment.body)
+        }
+
+
 class Requester():
 
     def __init__(self, url: str):
@@ -88,10 +150,10 @@ class SynchronizerCRUD():
         self.__cmd = cmd
         self.__request_url = url + cmd
 
-    def delete_set(self, ds: set[SyncPost]) -> str:
+    def delete_set(self, ds: set) -> str:
         if (len(ds) > 0):
             requester = Requester(self.__request_url)
-            response = f"Deleted from {self.__cmd} with ids:"
+            response = f", deleted ids:"
             for item in ds:
                 delete_cmd = self.__request_url + str(item.id)
                 requester.delete(delete_cmd)
@@ -99,10 +161,10 @@ class SynchronizerCRUD():
             return response
         return " 0 deleted "
 
-    def create_set(self, ds: set[SyncPost]) -> str:
+    def create_set(self, ds: set) -> str:
         if (len(ds) > 0):
             requester = Requester(self.__request_url)
-            response = f"Created in {self.__cmd} with ids:"
+            response = f", created ids:"
             for item in ds:
                 post_cmd = self.__request_url + str(item.id)
                 requester.create(post_cmd, item.to_dict())
@@ -110,10 +172,10 @@ class SynchronizerCRUD():
             return response
         return " 0 created "
     
-    def update_set(self, ds: set[SyncPost]) -> str:
+    def update_set(self, ds: set) -> str:
         if (len(ds) > 0):
             requester = Requester(self.__request_url)
-            response = f"Updated in {self.__cmd} with ids:"
+            response = f", updated ids:"
             for item in ds:
                 put_cmd = self.__request_url + str(item.id)
                 requester.update(put_cmd, item.to_dict())
@@ -127,7 +189,7 @@ class Synchronizer():
     def __init__(self, url: str):
         self.__request_url = url
 
-    def __get_changes(self, set_db: set[SyncPost], set_rq: set[SyncPost]):
+    def __get_changes(self, set_db: set, set_rq: set):
         created, updated, deleted = set(), set(), set()
 
         for db_item in set_db:
@@ -152,7 +214,7 @@ class Synchronizer():
 
         return created, updated, deleted
 
-    def __syncrhonize_remote(self, db_data: list[SyncPost], rq_data: list[SyncPost]):
+    def __syncrhonize_remote(self, cmd: RestCmd, db_data: list, rq_data: list):
         """
         Calculates the difference between database and received data and syncrhonizes
         remote server according to the differences
@@ -167,30 +229,38 @@ class Synchronizer():
         db_diff = set_db.difference(set_rq)
         created, updated, deleted = self.__get_changes(db_diff, rq_diff)
 
-        response = "Synchronized with "
-        crud = SynchronizerCRUD(self.__request_url, "/posts")
+        response = f"Synchronized {cmd.value}: "
+        crud = SynchronizerCRUD(self.__request_url, cmd.value)
         response += crud.create_set(created)
         response += crud.delete_set(deleted)
         response += crud.update_set(updated)
         return response
 
 
-    def synchronize(self) -> str:
+    def synchronize(self, cmd: RestCmd) -> str:
         f"""
         Synchronizes the database in the project with data from {sync_url}
         """
 
+        match cmd:
+            case RestCmd.POSTS:
+                sync_class = SyncPost
+                model = Post
+            case RestCmd.COMMENTS:
+                sync_class = SyncComment
+                model = Comment
+            case _:
+                return "Error. Undefined REST command."
+
         requester = Requester(self.__request_url)
-        vrq_data = requester.data_list_from_get_request("/posts")
+        vrq_data = requester.data_list_from_get_request(cmd.value)
         rq_data = []
         for d in vrq_data:
-            rq_data.append(SyncPost.from_dict(d))
+            rq_data.append(sync_class.from_dict(d))
 
-        data_list = list(Post.objects.all())
+        data_list = list(model.objects.all())
         db_data = []
         for post in data_list:
-            db_data.append(SyncPost(post))
+            db_data.append(sync_class(post))
 
-        return self.__syncrhonize_remote(db_data, rq_data)
-
-
+        return self.__syncrhonize_remote(cmd, db_data, rq_data)

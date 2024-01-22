@@ -5,7 +5,7 @@ import requests
 import io
 
 from ...synchronization import Synchronizer, sync_url
-
+from ...definitions import RestCmd
 
 class Command(BaseCommand):
 
@@ -15,7 +15,9 @@ class Command(BaseCommand):
 
         try:
             sync = Synchronizer(sync_url)
-            result = sync.synchronize()
+            result = sync.synchronize(RestCmd.POSTS)
+            self.stdout.write(result)
+            result = sync.synchronize(RestCmd.COMMENTS)
             self.stdout.write(result)
         except Exception as ex:
             self.stdout.write("Error loading data: " + str(ex))

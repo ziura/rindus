@@ -12,17 +12,8 @@ class Post(models.Model):
 
 
 class Comment(models.Model):
-    postId = models.ForeignKey(Post, on_delete=models.CASCADE)
+    postId = models.ForeignKey(Post, on_delete=models.CASCADE, null=True)
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=128)
     email = models.EmailField()
     body = models.TextField()
-
-    def to_dict(self) -> dict:
-        return {
-            "postId": str(Comment.postId),
-            "id": str(Comment.id),
-            "name": str(Comment.name),
-            "email": str(Comment.email),
-            "body": str(Comment.body)
-        }
