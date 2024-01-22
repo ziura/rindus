@@ -38,11 +38,6 @@ class SyncPost():
     def __hash__(self):
         return hash(self.__repr__())
 
-    def __contains__(self, other):
-        if isinstance(other, SyncPost):
-            return self.id == other.id
-        return False
-
     @classmethod
     def from_dict(cls, dict_post: dict):
         return cls(
@@ -82,6 +77,10 @@ class Requester():
         url = self.__url + cmd
         requests.post(url, json=content)
 
+    def update(self, cmd: str, content: dict):
+        url = self.__url + cmd
+        requests.put(url, json=content)
+
 
 class SynchronizerCRUD():
 
@@ -98,7 +97,7 @@ class SynchronizerCRUD():
                 requester.delete(delete_cmd)
                 response += str(item.id) + " "
             return response
-        return "0 deleted"
+        return " 0 deleted "
 
     def create_set(self, ds: set[SyncPost]) -> str:
         if (len(ds) > 0):
@@ -109,13 +108,49 @@ class SynchronizerCRUD():
                 requester.create(post_cmd, item.to_dict())
                 response += str(item.id) + " "
             return response
-        return "0 created"
+        return " 0 created "
+    
+    def update_set(self, ds: set[SyncPost]) -> str:
+        if (len(ds) > 0):
+            requester = Requester(self.__request_url)
+            response = f"Updated in {self.__cmd} with ids:"
+            for item in ds:
+                put_cmd = self.__request_url + str(item.id)
+                requester.update(put_cmd, item.to_dict())
+                response += str(item.id) + " "
+            return response
+        return " 0 updated "
 
 
 class Synchronizer():
 
     def __init__(self, url: str):
         self.__request_url = url
+
+    def __get_changes(self, set_db: set[SyncPost], set_rq: set[SyncPost]):
+        created, updated, deleted = set(), set(), set()
+
+        for db_item in set_db:
+            exists = False
+            for rq_item in set_rq:
+                if db_item.id == rq_item.id:
+                    exists = True
+            
+            if exists:
+                updated.add(db_item)
+            else:
+                created.add(db_item)
+
+        for rq_item in set_rq:
+            exists = False
+            for db_item in set_db:
+                if db_item.id == rq_item.id:
+                    exists = True
+
+            if not exists:
+                deleted.add(rq_item)
+
+        return created, updated, deleted
 
     def __syncrhonize_remote(self, db_data: list[SyncPost], rq_data: list[SyncPost]):
         """
@@ -124,17 +159,19 @@ class Synchronizer():
         """
         set_db = set(db_data)
         set_rq = set(rq_data)
-
+        
         if set_db == set_rq:
             return "No change. Nothing to synchronize"
 
-        deleted = set_rq.difference(set_db)
-        created = set_db.difference(set_rq)
+        rq_diff = set_rq.difference(set_db)
+        db_diff = set_db.difference(set_rq)
+        created, updated, deleted = self.__get_changes(db_diff, rq_diff)
 
         response = "Synchronized with "
         crud = SynchronizerCRUD(self.__request_url, "/posts")
         response += crud.create_set(created)
         response += crud.delete_set(deleted)
+        response += crud.update_set(updated)
         return response
 
 
