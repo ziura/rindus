@@ -57,6 +57,14 @@ class PostsView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def patch(self, request, pk, format=None):
+        post = self.__get_post(pk=pk)
+        serializer = PostSerializer(post, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def delete(self, request, pk, format=None):
         post = self.__get_post(pk=pk)
         post.delete()
@@ -104,6 +112,14 @@ class CommentsView(APIView):
     def put(self, request, pk, format=None):
         comment = self.__get_comment(pk=pk)
         serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, pk, format=None):
+        comment = self.__get_comment(pk=pk)
+        serializer = CommentSerializer(comment, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

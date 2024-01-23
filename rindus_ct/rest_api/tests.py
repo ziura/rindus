@@ -22,7 +22,7 @@ class CrudTestCase(APITestCase):
             title="title",
             body="body"
         )
-        
+
         self.comment_id = 1
         Comment.objects.create(
             postId=Post.objects.get(id=self.post_id),
@@ -69,7 +69,7 @@ class CrudTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, comment)
 
-    def test_update(self):
+    def test_put(self):
         """
         Check that posts and comments updated with PUT commands
         """
@@ -101,6 +101,28 @@ class CrudTestCase(APITestCase):
         response = self.client.get(RestCmd.COMMENTS.value + str(self.comment_id) + "/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, comment)
+
+    def test_patch(self):
+        """
+        Check that posts and comments updated with PATCH commands
+        """
+        patch = {"title": "patched title"}
+
+        response = self.client.patch(RestCmd.POSTS.value + str(self.post_id) + "/", patch)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(RestCmd.POSTS.value + str(self.post_id) + "/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["title"], "patched title")
+
+        patch = {"name": "patched name"}
+
+        response = self.client.patch(RestCmd.COMMENTS.value + str(self.comment_id) + "/", patch)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(RestCmd.COMMENTS.value + str(self.comment_id) + "/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["name"], "patched name")
 
     def test_cascade_on_delete(self):
         """
@@ -149,7 +171,7 @@ class CrudTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, {"id":["comment with this id already exists."]})
 
-    def test_field_validation(self):
+    def test_email_validation(self):
         """
         Incorrect email formats must return format error
         """
@@ -165,4 +187,35 @@ class CrudTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, {"email":["Enter a valid email address."]})
 
+    def test_unknown_field_validation(self):
+        """
+        Unknown json fields are validated and rejected in POST, PUT and PATCH requests
+        """
+        post_id = self.post_id + 1
+        post = {
+            "userId": self.default_user_id,
+            "id": post_id,
+            "title": "first post",
+            "body": "body",
+            "unknown": "unknown"
+        }
+        response = self.client.post(RestCmd.POSTS.value, post)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {"non_field_errors":["Unknown field(s): unknown"]})
     
+        comment = {
+            "postId": self.post_id,
+            "id": self.comment_id,
+            "name": "updated name",
+            "email": "updated@email.com",
+            "body": "updated body",
+            "unknown": "unknown field"
+        }
+        response = self.client.put(RestCmd.COMMENTS.value + str(self.comment_id) + "/", comment)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {"non_field_errors":["Unknown field(s): unknown"]})
+
+        patch = {"unknown": "unknown field"}
+        response = self.client.patch(RestCmd.COMMENTS.value + str(self.comment_id) + "/", patch)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {"non_field_errors":["Unknown field(s): unknown"]})
