@@ -4,10 +4,11 @@ from rest_framework.exceptions import ParseError
 import requests
 import io
 
-from ...definitions import RestCmd
+from ...definitions import RestCmd, ImporterCodes
 from ...models import Post, Comment
 from ...serializers import PostSerializer, CommentSerializer
 from ...synchronization import Requester, sync_url
+
 
 class DataImporter():
 
@@ -31,13 +32,13 @@ class DataImporter():
 
     def load_data(self, cmd: str):
         if self.__is_data_loaded(cmd):
-            return "data already loaded. We need an empty table to load new data"
+            return ImporterCodes.DUPLICATED.value
 
         requester = Requester(self.__request_url)
         data = requester.data_list_from_get_request(cmd)
         
         if len(data) == 0:
-            return "No data loaded. Empty set."
+            return ImporterCodes.EMPTY.value
 
         for index, dataitem in enumerate(data):
             if cmd == RestCmd.POSTS.value:
@@ -52,39 +53,7 @@ class DataImporter():
 
             serializer.save()
 
-        return "Finished loading data successfully"
-
-    #To be tested
-    def load_data_batch(self, cmd: str):
-        if self.__is_data_loaded(cmd):
-            self.stdout.write(
-                f"{cmd} data already loaded. We need an empty table to load new data"
-            )
-            return
-
-        url = self.__request_url + cmd
-        res = requests.get(url)
-        stream = io.BytesIO(res.content)
-        data = JSONParser().parse(stream)
-        
-        if len(data) == 0:
-            self.stdout.write("No data loaded. Empty set.")
-            return
-
-        if cmd == RestCmd.POSTS.value:
-            serializer = PostSerializer(data=data, many=True)
-        elif cmd == RestCmd.COMMENTS.value:
-            serializer = CommentSerializer(data=data, many=True)
-        else:
-            raise Exception(f"unknown API command {cmd}")
-
-        if not serializer.is_valid():
-            self.stdout.write(
-                f"Errors parsing data: " + str(serializer.errors)
-            )
-        serializer.save()
-
-        self.stdout.write(f"Finished loading data from {cmd}")
+        return ImporterCodes.SUCCESS.value
 
 
 class Command(BaseCommand):

@@ -6,6 +6,14 @@ import io
 
 from ...models import Post, Comment
 from ...serializers import PostSerializer, CommentSerializer
+from ...definitions import ImporterCodes
+
+class DataClearer():
+
+    def clear_db_data(self):
+        Post.objects.all().delete()
+        Comment.objects.all().delete()
+        return ImporterCodes.DELETE_SUCCESS.value
 
 class Command(BaseCommand):
 
@@ -14,8 +22,6 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
 
         try:
-            Post.objects.all().delete()
-            Comment.objects.all().delete()
-            self.stdout.write("Data deleted from the database")
+            self.stdout.write( DataClearer().clear_db_data() )
         except Exception as ex:
             self.stdout.write("Error loading data: " + str(ex))
