@@ -2,8 +2,8 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 import json
 
-from .definitions import RestCmd
-from .models import Post, Comment, default_user_id
+from ..definitions import RestCmd
+from ..models import Post, Comment, default_user_id
 
 #If the test engine fails to create the test database running the tests, 
 # open the postgres shell and run:
