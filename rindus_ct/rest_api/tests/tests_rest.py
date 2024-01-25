@@ -4,6 +4,7 @@ import json
 
 from ..definitions import RestCmd
 from ..models import Post, Comment, default_user_id
+from ..management.commands.clear_data import DataClearer
 
 #If the test engine fails to create the test database running the tests, 
 # open the postgres shell and run:
@@ -33,6 +34,9 @@ class CrudTestCase(APITestCase):
         )
 
         return super().setUp()
+
+    def tearDown(self):
+        DataClearer().clear_db_data()
 
     def test_create_posts(self):
         """

@@ -16,6 +16,9 @@ class CrudTestCase(APITestCase):
 
     def setUp(self):
         return super().setUp()
+    
+    def tearDown(self):
+        DataClearer().clear_db_data()
 
     def test_import_placeholder_data(self):
         """

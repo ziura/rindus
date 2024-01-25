@@ -3,7 +3,7 @@ import requests
 import io
 
 from .models import Post, Comment
-from .definitions import RestCmd
+from .definitions import RestCmd, SyncCodes
 
 sync_url = "https://jsonplaceholder.typicode.com"
 
@@ -188,9 +188,12 @@ class Synchronizer():
 
     def __init__(self, url: str):
         self.__request_url = url
+        self.created = set()
+        self.updated = set()
+        self.deleted = set()
 
-    def __get_changes(self, set_db: set, set_rq: set):
-        created, updated, deleted = set(), set(), set()
+    def __compute_changes(self, set_db: set, set_rq: set):
+        self.created, self.updated, self.deleted = set(), set(), set()
 
         for db_item in set_db:
             exists = False
@@ -199,9 +202,9 @@ class Synchronizer():
                     exists = True
             
             if exists:
-                updated.add(db_item)
+                self.updated.add(db_item)
             else:
-                created.add(db_item)
+                self.created.add(db_item)
 
         for rq_item in set_rq:
             exists = False
@@ -210,9 +213,7 @@ class Synchronizer():
                     exists = True
 
             if not exists:
-                deleted.add(rq_item)
-
-        return created, updated, deleted
+                self.deleted.add(rq_item)
 
     def __syncrhonize_remote(self, cmd: RestCmd, db_data: list, rq_data: list):
         """
@@ -223,17 +224,17 @@ class Synchronizer():
         set_rq = set(rq_data)
         
         if set_db == set_rq:
-            return "No change. Nothing to synchronize"
+            return SyncCodes.NO_CHANGE.value
 
         rq_diff = set_rq.difference(set_db)
         db_diff = set_db.difference(set_rq)
-        created, updated, deleted = self.__get_changes(db_diff, rq_diff)
+        self.__compute_changes(db_diff, rq_diff)
 
         response = f"Synchronized {cmd.value}: "
         crud = SynchronizerCRUD(self.__request_url, cmd.value)
-        response += crud.create_set(created)
-        response += crud.delete_set(deleted)
-        response += crud.update_set(updated)
+        response += crud.create_set(self.created)
+        response += crud.delete_set(self.deleted)
+        response += crud.update_set(self.updated)
         return response
 
 

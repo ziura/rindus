@@ -9,3 +9,6 @@ class ImporterCodes(Enum):
     DUPLICATED = "Data already loaded. We need an empty table to load new data"
     EMPTY = "No data loaded. Empty set."
     DELETE_SUCCESS = "Data successfully deleted from database"
+
+class SyncCodes(Enum):
+    NO_CHANGE = "No change. Nothing to synchronize"

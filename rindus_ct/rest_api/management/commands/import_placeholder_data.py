@@ -31,6 +31,13 @@ class DataImporter():
 
 
     def load_data(self, cmd: str):
+        """
+        Downloads posts and comments from the remote API Rest service
+        and saves them to the database. It saves the items one by one in
+        the database, which is bad for performance. To improve it, a 
+        single SQL INSERT transaction could be done so a single database
+        connection would be needed.
+        """
         if self.__is_data_loaded(cmd):
             return ImporterCodes.DUPLICATED.value
 

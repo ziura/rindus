@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_api import views
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,6 +27,14 @@ urlpatterns = [
     path('comments/<int:pk>/', views.CommentsView.as_view()),
     path('posts/', views.PostsList.as_view()),
     path('posts/<int:pk>/', views.PostsView.as_view()),
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "docs/",
+        SpectacularSwaggerView.as_view(
+            template_name="swagger-ui.html", url_name="schema"
+        ),
+        name="swagger-ui",
+    ),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
