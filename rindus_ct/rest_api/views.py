@@ -5,8 +5,9 @@ from django.http import Http404
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
 
-common_permission_level = permissions.AllowAny
+#common_permission_level = permissions.AllowAny
 #common_permission_level= permissions.IsAuthenticatedOrReadOnly
+common_permission_level= permissions.IsAuthenticated
 
 class PostsList(APIView):
     """

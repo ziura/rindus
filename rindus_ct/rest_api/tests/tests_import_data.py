@@ -1,7 +1,9 @@
 from rest_framework.test import APITestCase
+from rest_framework.authtoken.models import Token
 from rest_framework import status
 import json
 
+from .tests_auth import AuthenticatedTestCase
 from ..definitions import RestCmd, ImporterCodes
 from ..models import Post, Comment, default_user_id
 from ..management.commands.import_placeholder_data import DataImporter, sync_url
@@ -12,11 +14,11 @@ from ..management.commands.clear_data import DataClearer
 # ALTER USER rindus CREATEDB;
 
 
-class CrudTestCase(APITestCase):
+class DataImportTestCase(AuthenticatedTestCase):
 
     def setUp(self):
         return super().setUp()
-    
+
     def tearDown(self):
         DataClearer().clear_db_data()
 

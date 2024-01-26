@@ -1,7 +1,10 @@
+from django.contrib.auth.models import User
 from rest_framework.test import APITestCase
+from rest_framework.authtoken.models import Token
 from rest_framework import status
 import json
 
+from .tests_auth import AuthenticatedTestCase
 from ..definitions import RestCmd
 from ..models import Post, Comment, default_user_id
 from ..management.commands.clear_data import DataClearer
@@ -11,7 +14,7 @@ from ..management.commands.clear_data import DataClearer
 # ALTER USER rindus CREATEDB;
 
 
-class CrudTestCase(APITestCase):
+class CrudTestCase(AuthenticatedTestCase):
 
     def setUp(self):
         self.default_user_id = default_user_id

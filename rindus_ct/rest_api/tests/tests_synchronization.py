@@ -66,7 +66,6 @@ class CrudTestCase(APITestCase):
         post.delete()
         #Related comments are deleted on cascade from deleting the post
 
-
         post_updated = 2
         post = Post.objects.get(id=post_updated)
         comment = Comment.objects.filter(postId=post).first()
