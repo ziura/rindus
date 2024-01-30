@@ -16,7 +16,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework.urlpatterns import format_suffix_patterns
 from rest_api import views
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
@@ -36,5 +35,3 @@ urlpatterns = [
         name="swagger-ui",
     ),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)
