@@ -73,6 +73,8 @@ It is necessary then to do a whole synchronization between datasets. The whole r
 
 Please note that this approach is less efficient than a incremental time based one, but no other option is possible if there is no time reference available.
 
+I could also have tried an incremental synchronization based on the HTTP header "Last-Modified" returned by the server, but that approach has been discarded in my implementation.
+
 The synchronization is triggered running the django command:
 
 `python3 manage.py synchronize`
