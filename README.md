@@ -7,6 +7,7 @@ Due to lack of time, the Docker container hasn't been implemented, so the servic
 The first time the project is run, the database migrations must be done with:
 
 `python3 manage.py makemigrations`
+
 `python3 manage.py migrate`
 
 And after that run the development server with:
@@ -21,7 +22,7 @@ To import the data from the placeholder, execute:
 
 `python3 manage.py import_placeholder_data`
 
-This command will download the posts and comments from https://jsonplaceholder.typicode.com/ and will save it to the local Postgres database. The data models used to store in the database can be found in `rindus_ct/res_api/models.py`
+This command will download the posts and comments from https://jsonplaceholder.typicode.com/ and will save it to the local database. The data models used to store in the database can be found in `rindus_ct/res_api/models.py`
 
 This command requires an empty database to work. If the database is not empty, it will return an error message to prevent the loss of modifications.
 
@@ -97,5 +98,6 @@ Due to lack of time, there are quite a few things that need to be improved but h
 - Delivery with docker and docker compose
 - Add asynchronous support to requests to improve system performance (asyncio functionality)
 - Add OpenAPI schemas to DRF views to generate automatic Swagger documentation for the responses with all response codes in the docs
+- Modify settings.py file to add security measures as recommended in the security checklist from the django documentation.
 
 
