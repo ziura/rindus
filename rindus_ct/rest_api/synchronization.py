@@ -242,7 +242,6 @@ class Synchronizer():
         f"""
         Synchronizes the database in the project with data from {sync_url}
         """
-
         match cmd:
             case RestCmd.POSTS:
                 sync_class = SyncPost

@@ -10,6 +10,12 @@ from ...serializers import PostSerializer, CommentSerializer
 from ...synchronization import Requester, sync_url
 
 
+class ImportException(Exception):
+    
+    def __init__(super, message):
+        super().__init__(message)
+
+
 class DataImporter():
 
     def __init__(self, url: str):
@@ -27,10 +33,10 @@ class DataImporter():
             else:
                 return False
         else:
-            raise Exception(f"unknown API command {cmd}")
+            raise ImportException(f"unknown API command {cmd}")
 
 
-    def load_data(self, cmd: str):
+    def load_data(self, cmd: str) -> str:
         """
         Downloads posts and comments from the remote API Rest service
         and saves them to the database. It saves the items one by one in
@@ -53,7 +59,7 @@ class DataImporter():
             elif cmd == RestCmd.COMMENTS.value:
                 serializer = CommentSerializer(data=dataitem)
             else:
-                raise Exception(f"unknown API command {cmd}")
+                raise ImportException(f"unknown API command {cmd}")
 
             if not serializer.is_valid():
                 return f"Errors parsing item {index}: " + str(serializer.errors)
@@ -80,6 +86,8 @@ class Command(BaseCommand):
 
         except ParseError as ex:
             self.stdout.write("Could not parse downloaded data: " + str(ex))
+        except ImportException as ex:
+            self.stdout.write("Error importing data: " + str(ex))
         except Exception as ex:
             self.stdout.write("Error loading data: " + str(ex))
 
