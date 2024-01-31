@@ -80,11 +80,11 @@ The synchronization is triggered running the django command:
 
 # 4. Testing
 
-# 4.1 Testing manually
+## 4.1 Testing manually
 
 The API can be tested manually through CLI curl commands, or through the Swagger browsable API as it has been described in the previous sections.
 
-# 4.2 Automated tests
+## 4.2 Automated tests
 
 A test suite is included in rindus_ct/rest_api/tests. To execute the tests, run:
 
