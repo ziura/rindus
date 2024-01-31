@@ -49,7 +49,7 @@ class CrudTestCase(APITestCase):
             title="test title",
             body="test body"
         )
-        comment = Comment.objects.create(
+        Comment.objects.create(
             postId=post,
             id=comment_created,
             name="test",
