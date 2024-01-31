@@ -37,6 +37,8 @@ After executing it, the fresh data can be imported again.
 
 ## 2.1 API documentation
 
+### 2.1.1 DRF spectacular with Swagger
+
 For API documentation, I have used the package drf-spectacular that uses Swagger and OpenAPI to generate interactive documentation automatically from the code. To install this package, run:
 
 `pip install drf-spectacular`
@@ -46,6 +48,10 @@ To visualize the generated documentation, please run the development server and 
 `http://127.0.0.1:8000/docs/`
 
 At that page, you can look up all available requests and methods, the expected response codes and the schemas needed for requests and responses.
+
+### 2.1.2 DRF browsable API
+
+The default DRF browsable API can also be used for checking API commands, but in order to do it is more convenient to disable authentication of the requests.
 
 ## 2.2 Authorization and authentication
 
