@@ -23,6 +23,5 @@ services:
       - POSTGRES_USER=rindus
       - POSTGRES_PASSWORD=1234
 
-
 volumes:
   postgres-db-volume:
