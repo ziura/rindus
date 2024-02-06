@@ -1,6 +1,4 @@
 from rest_framework.test import APITestCase
-from rest_framework import status
-import json
 
 from ..definitions import RestCmd, SyncCodes
 from ..models import Post, Comment, default_user_id

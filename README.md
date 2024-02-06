@@ -1,10 +1,17 @@
-# 0. Introduction
+# 1. Introduction
 
 This file describes the proposed solution for the Rindus coding task assignment.
 
-Due to lack of time, the Docker container hasn't been implemented, so the service must be run with the django development server instead.
+The project is built under the folder `rindus_ct` (aka rindus coding task). Choose that folder as the root folder for all the commands and files that are described in subsequent chapters:
 
-The first time the project is run, the database migrations must be done with:
+`cd rindus_ct`
+
+The project has been developed with Django and Django Rest Framework. The additional libraries and dependencies used can be found in the file `requirements.txt`
+
+
+## 1.1. Running the service without Docker
+
+The service can be run without docker with the django development server. The first time the project is run this way, the database migrations should be done with:
 
 `python3 manage.py makemigrations`
 
@@ -14,30 +21,40 @@ And after that run the development server with:
 
 `python3 manage.py runserver`
 
-Since the service will run without a container, the database used has been the built in SQLite instead of the requested Postgres one.
+Please note that the project uses a PostgreSQL database that needs to be configured before the django app is run. To avoid this step, we can use Docker and docker compose to use containerized PostgreSQL and Django containers that will connect with each other. This is explained in the next section.
 
-# 1. Django command to import placeholder data
+
+## 1.2. Running the service with Docker and docker compose
+
+Execute the following command to build the django app into a docker image and run the django and postgresql containers:
+
+`sudo docker compose up` 
+
+
+# 2. Django command to import placeholder data
 
 To import the data from the placeholder, execute:
 
 `python3 manage.py import_placeholder_data`
 
-This command will download the posts and comments from https://jsonplaceholder.typicode.com/ and will save it to the local database. The data models used to store in the database can be found in `rindus_ct/res_api/models.py`
+This command will download the posts and comments from https://jsonplaceholder.typicode.com/ and it will save it to the postgres database. The data models used to store the imported data in the database can be found in `rindus_ct/res_api/models.py`
 
 This command requires an empty database to work. If the database is not empty, it will return an error message to prevent the loss of modifications.
 
-However it is possible to delete all database data with the command:
+It is also possible to delete all database data with the command:
 
 `python3 manage.py clear_data`
 
 After executing it, the fresh data can be imported again.
 
+All the django CLI commands can be found under the folder `rindus_ct/rest_api/management/commands`
 
-# 2. REST API to manage the data
 
-## 2.1 API documentation
+# 3. REST API to manage the data
 
-### 2.1.1 DRF spectacular with Swagger
+## 3.1 API documentation
+
+### 3.1.1 DRF spectacular with Swagger
 
 For API documentation, I have used the package drf-spectacular that uses Swagger and OpenAPI to generate interactive documentation automatically from the code. To install this package, run:
 
@@ -49,13 +66,13 @@ To visualize the generated documentation, please run the development server and 
 
 At that page, you can look up all available requests and methods, the expected response codes and the schemas needed for requests and responses.
 
-### 2.1.2 DRF browsable API
+### 3.1.2 DRF browsable API
 
 The default DRF browsable API can also be used for checking API commands, but in order to do it is more convenient to disable authentication of the requests.
 
-## 2.2 Authorization and authentication
+## 3.2 Authorization and authentication
 
-The requests are protected by token authorization and authentication. So, in order to test the API manually, it is necessary to create users manually in the Django admin site and generate tokens to use in the requests. For doing it, follow this steps:
+The requests are protected by token authorization and authentication. So, in order to test the API manually, it is necessary to create users manually in the Django admin site and generate tokens to use in the requests. For doing it, follow these steps:
 
 Create a superuser with the command:
 
@@ -65,13 +82,16 @@ Go to the admin site at: http://127.0.0.1:8000/admin/ and log in with the superu
 
 Add a token in the Auth Token section.
 
-Go to the Swagger doc page http://127.0.0.1:8000/docs/ and authorize the requests in the upper right corner of the screen with the previous token and the prefix "Token " appended before it.
+Go to the Swagger doc page http://127.0.0.1:8000/docs/ and authorize the requests in the upper right corner of the screen with the generated token and the prefix "Token " appended before it.
 
 Now the requests can be manually tested in the Swagger web interface.
 
-# 3. System synchronization
+Request authentication can be disabled for testing setting the global variable `common_permission_level` to `permissions.AllowAny` in `rindus_ct/rest_api/views.py`
 
-Since the system developed acts as master, it means that the data in the local database must be preserved, compared to the data in the remote placeholder, and the system must send the appropiate REST commands to the remote placeholder to change its data.
+
+# 4. System synchronization
+
+The system developed acts as master. This means that the data in the local database must be preserved, compared to the data in the remote placeholder, and the system must then send the appropiate REST commands to the remote placeholder to change the diverging data.
 
 The remote placeholder schemas do not have any time information about when the last changes were done (it does not have any "last modified" field). For this reason, it is not possible to attempt an incremental synchronization based on the latest changes.
 
@@ -86,26 +106,24 @@ The synchronization is triggered running the django command:
 `python3 manage.py synchronize`
 
 
-# 4. Testing
+# 5. Testing
 
-## 4.1 Testing manually
+## 5.1 Testing manually
 
 The API can be tested manually through CLI curl commands, or through the Swagger browsable API as it has been described in the previous sections.
 
-## 4.2 Automated tests
 
-A test suite is included in rindus_ct/rest_api/tests. To execute the tests, run:
+## 5.2 Automated tests
+
+A test suite is included in `rindus_ct/rest_api/tests`. To execute the tests, run:
 
 `python3 manage.py test`
 
 
-# 5. Pending improvements
+# 6. Pending improvements
 
-Due to lack of time, there are quite a few things that need to be improved but haven't been completed due to lack of time. The most important are:
+Due to lack of time, there are quite a few things that need to be improved but haven't been completed. The most important are:
 
-- Delivery with docker and docker compose
 - Add asynchronous support to requests to improve system performance (asyncio functionality)
 - Add OpenAPI schemas to DRF views to generate automatic Swagger documentation for the responses with all response codes in the docs
-- Modify settings.py file to add security measures as recommended in the security checklist from the django documentation.
-
-
+- Modify settings.py file to add security recommendations from the django documentation, as if the service was to be put in production.

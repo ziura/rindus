@@ -1,8 +1,5 @@
 from django.core.management.base import BaseCommand
-from rest_framework.parsers import JSONParser
 from rest_framework.exceptions import ParseError
-import requests
-import io
 
 from ...definitions import RestCmd, ImporterCodes
 from ...models import Post, Comment
@@ -12,7 +9,7 @@ from ...synchronization import Requester, sync_url
 
 class ImportException(Exception):
     
-    def __init__(super, message):
+    def __init__(self, message):
         super().__init__(message)
 
 

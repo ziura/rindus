@@ -1,8 +1,4 @@
 from django.core.management.base import BaseCommand
-from rest_framework.parsers import JSONParser
-from rest_framework.exceptions import ParseError
-import requests
-import io
 
 from ...synchronization import Synchronizer, sync_url
 from ...definitions import RestCmd

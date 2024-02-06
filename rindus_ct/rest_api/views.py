@@ -1,4 +1,3 @@
-from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -7,7 +6,9 @@ from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
 
 
+#Change to AllowAny to disable authentication in requests
 common_permission_level= permissions.IsAuthenticated
+
 
 class PostsList(GenericAPIView):
     """
