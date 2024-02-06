@@ -30,6 +30,14 @@ Execute the following command to build the django app into a docker image and ru
 
 `sudo docker compose up` 
 
+Once the containers are running, type this command to look for the container IDs:
+
+`sudo docker images`
+
+Once we know the container ID of the django application, we can access the virtualized bash console to execute the necessary commands with:
+
+`sudo docker exec -t -i <container-id> bash`
+
 
 # 2. Django command to import placeholder data
 
